@@ -16,7 +16,7 @@ jobs:
       AWS_REGION: ap-northeast-2
       AWS_ACCOUNT_ID: 514090833954
       ECR_REPOSITORY: fs25-cluster-repo
-      IMAGE_TAG: v${{ github.run_number }}
+      IMAGE_TAG: ${{ github.sha }}
 
     steps:
       - name: Checkout
