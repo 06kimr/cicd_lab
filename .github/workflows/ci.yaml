@@ -10,8 +10,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      AWS_REGION: ap-northeast-2
-      AWS_ACCOUNT_ID: 514090833954
+      AWS_REGION: us-west-1
+      AWS_ACCOUNT_ID: AKIAXPMRTTARL3ILVT2T
       ECR_REPOSITORY: fs25-cluster-repo
       ECR_REGISTRY: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
       IMAGE_TAG: ${{ github.sha }}
