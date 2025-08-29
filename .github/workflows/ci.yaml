@@ -6,15 +6,17 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: write  # auto-commit/push를 위해 필요
+
 jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      AWS_REGION: us-west-1
-      AWS_ACCOUNT_ID: AKIAXPMRTTARL3ILVT2T
+      AWS_REGION: ap-northeast-2
+      AWS_ACCOUNT_ID: 514090833954
       ECR_REPOSITORY: fs25-cluster-repo
-      ECR_REGISTRY: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
-      IMAGE_TAG: ${{ github.sha }}
+      IMAGE_TAG: v${{ github.run_number }}
 
     steps:
       - name: Checkout
@@ -27,9 +29,12 @@ jobs:
           java-version: '17'
           cache: maven
 
+      - name: Ensure mvnw is executable
+        run: chmod +x ./mvnw
+
       - name: Build (skip tests)
         run: ./mvnw -q -DskipTests package
-        
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -39,6 +44,10 @@ jobs:
 
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
+
+      # ECR_REGISTRY 계산 후 이후 스텝에 주입
+      - name: Compute ECR_REGISTRY
+        run: echo "ECR_REGISTRY=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com" >> $GITHUB_ENV
 
       - name: Build & Push image
         uses: docker/build-push-action@v6
@@ -54,6 +63,7 @@ jobs:
           sed -i 's|^\(\s*image:\s*\).*|\1'${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}'|' k8s/deployment.yaml
 
       - name: Commit & push changed manifest
+        if: github.event_name == 'push'   # PR에서 푸시 방지
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore(ci): update image tag to ${{ env.IMAGE_TAG }}"
